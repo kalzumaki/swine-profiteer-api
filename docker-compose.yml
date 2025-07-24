@@ -3,45 +3,63 @@ services:
     build:
       context: .
       dockerfile: .docker/Dockerfile.dev
-    container_name: swine-profiteer-app:development
-    image: swine-profiteer-app:development
+    container_name: swine-profiteer-app
     ports:
       - "3333:3333"
     env_file:
       - .env
-    depends_on:
-      - db
+    environment:
+      - HOST=0.0.0.0
+      - DB_HOST=mysql
     volumes:
       - .:/app
-    restart: unless-stopped
+      - /app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - swine-network
 
-  db:
+  mysql:
     image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      TZ: ${TZ}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
+    container_name: swine-profiteer-mysql
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_DATABASE}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - swine-network
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: swine-profiteer-phpmyadmin
     restart: unless-stopped
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=${DB_PASSWORD}
     ports:
       - "8080:80"
-    environment:
-      PMA_HOST: db
-      PMA_USER: ${DB_USER}
-      PMA_PASSWORD: ${DB_PASSWORD}
-      TZ: ${TZ}
     depends_on:
-      - db
+      mysql:
+        condition: service_healthy
+    networks:
+      - swine-network
 
 volumes:
-  db_data:
+  mysql_data:
+
+networks:
+  swine-network:
+    driver: bridge

@@ -1,15 +1,30 @@
-
 FROM node:20-alpine
+
 
 WORKDIR /app
 
-RUN apk add --no-cache mysql-client
+
+RUN apk add --no-cache \
+    bash \
+    git \
+    && rm -rf /var/cache/apk/*
+
 
 COPY package*.json ./
+
 RUN npm install
+
 
 COPY . .
 
+
+RUN mkdir -p tmp
+
+
 EXPOSE 3333
 
-CMD ["node", "ace", "serve", "--watch"]
+
+ENV NODE_ENV=development
+
+
+CMD ["npm", "run", "dev"]
