@@ -21,23 +21,27 @@ router
 // login
 router.post('/login', [SessionController, 'store']).use(throttle)
 
+// register
+router.post('/register', [UsersController, 'store']).use(throttle)
+
 // auth guard
 router
   .group(() => {
     // logout
     router.delete('/logout', [SessionController, 'destroy'])
 
-    // block user
-    router.delete('/block/:id', [UsersController, 'destroy'])
+    // user management
+    router.put('/user/:id', [UsersController, 'update']) // update user
+    router.delete('/block/:id', [UsersController, 'destroy']) // block user
+    router.get('/profile', [UsersController, 'profile']) // get current user profile
+    router.put('/profile', [UsersController, 'updateProfile']) // update current user profile
+    // trashed users management
+    router.put('/restore/:id', [TrashedUsersController, 'update']) // restore user
+    router.get('/trashed/users', [TrashedUsersController, 'index']) // all blocked users
 
-    // restore user
-    router.put('/restore/:id', [TrashedUsersController, 'update'])
-
-    // all tokens
+    // tokens
     router.get('/tokens', async ({ auth }) => {
       return User.accessTokens.all(auth.user!)
     })
-    // all trashed users
-    router.get('/trashed/users', [TrashedUsersController, 'index'])
   })
   .use(middleware.auth({ guards: ['api'] }))

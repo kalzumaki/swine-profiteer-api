@@ -12,6 +12,7 @@ export type UserWithSoftDeletes = User & SoftDeletesMethods
 // response for user data
 export interface UserResponse {
     id: number
+    user_type: string | null
     fname: string
     lname: string
     username: string
@@ -25,5 +26,11 @@ export interface UserLoginResponse {
     type: string
     token: string
     token_expires_at: Date
+    user: UserResponse
+}
+
+// interface for register response
+export interface UserRegisterResponse {
+    message: string
     user: UserResponse
 }

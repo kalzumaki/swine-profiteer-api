@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
-
+import UserType from '#models/user_type'
+import { UserWithSoftDeletes } from '../types/user.js'
 export default class SessionController {
   //login
   async store({ request, auth, response }: HttpContext) {
@@ -10,19 +11,22 @@ export default class SessionController {
         return response.badRequest('Username and password are required')
       }
 
-      const userCheck = await User.withTrashed().where('username', username).first()
+      const userCheck = await User.withTrashed().where('username', username).first() as UserWithSoftDeletes | null
 
       if (!userCheck) {
         return response.unauthorized('Invalid credentials')
       }
 
-      if ((userCheck as any).deletedAt) {
+      if ((userCheck).deletedAt) {
         return response.forbidden({
           message: 'Your account has been blocked. Please contact administrator.',
         })
       }
 
       const user = await User.verifyCredentials(username, password)
+
+      // find the user's user type
+      const userType = await UserType.find(user.user_type)
 
       const token = await auth.use('api').createToken(user, ['*'], {
         name: `${user.username}-login-token`,
@@ -34,6 +38,7 @@ export default class SessionController {
         token_expires_at: token.expiresAt,
         user: {
           id: user.id,
+          user_type: userType ? userType.name : null,
           fname: user.fname,
           lname: user.lname,
           username: user.username,
