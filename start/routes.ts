@@ -37,5 +37,7 @@ router
     router.get('/tokens', async ({ auth }) => {
       return User.accessTokens.all(auth.user!)
     })
+    // all trashed users
+    router.get('/trashed/users', [TrashedUsersController, 'index'])
   })
   .use(middleware.auth({ guards: ['api'] }))
