@@ -2,7 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
 
 export default class SessionController {
-    //login
+  //login
   async store({ request, auth, response }: HttpContext) {
     try {
       const { username, password } = request.only(['username', 'password'])
@@ -10,12 +10,23 @@ export default class SessionController {
         return response.badRequest('Username and password are required')
       }
 
-      const user = await User.verifyCredentials(username, password)
+      const userCheck = await User.withTrashed().where('username', username).first()
 
-      if (!user) {
+      if (!userCheck) {
         return response.unauthorized('Invalid credentials')
       }
-      const token = await auth.use('api').createToken(user)
+
+      if ((userCheck as any).deletedAt) {
+        return response.forbidden({
+          message: 'Your account has been blocked. Please contact administrator.',
+        })
+      }
+
+      const user = await User.verifyCredentials(username, password)
+
+      const token = await auth.use('api').createToken(user, ['*'], {
+        name: `${user.username}-login-token`,
+      })
       return response.ok({
         message: 'Login successful',
         type: token.type,
@@ -37,7 +48,7 @@ export default class SessionController {
       })
     }
   }
-    //logout
+  //logout
   async destroy({ auth, response }: HttpContext) {
     try {
       await auth.use('api').invalidateToken()
