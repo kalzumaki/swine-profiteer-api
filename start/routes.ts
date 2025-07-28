@@ -44,4 +44,4 @@ router
       return User.accessTokens.all(auth.user!)
     })
   })
-  .use(middleware.auth({ guards: ['api'] }))
+  .use([middleware.auth({ guards: ['api'] }), middleware.tokenExpiration()])

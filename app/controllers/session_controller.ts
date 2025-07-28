@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
 import UserType from '#models/user_type'
 import { UserWithSoftDeletes } from '../types/user.js'
+
 export default class SessionController {
   //login
   async store({ request, auth, response }: HttpContext) {
@@ -11,13 +12,15 @@ export default class SessionController {
         return response.badRequest('Username and password are required')
       }
 
-      const userCheck = await User.withTrashed().where('username', username).first() as UserWithSoftDeletes | null
+      const userCheck = (await User.withTrashed()
+        .where('username', username)
+        .first()) as UserWithSoftDeletes | null
 
       if (!userCheck) {
         return response.unauthorized('Invalid credentials')
       }
 
-      if ((userCheck).deletedAt) {
+      if (userCheck.deletedAt) {
         return response.forbidden({
           message: 'Your account has been blocked. Please contact administrator.',
         })
@@ -31,10 +34,19 @@ export default class SessionController {
       const token = await auth.use('api').createToken(user, ['*'], {
         name: `${user.username}-login-token`,
       })
+      const isProduction: boolean = process.env.NODE_ENV === 'production'
+      response.cookie('token', token.value!.release(), {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        // maxAge: 60 * 60, 
+        maxAge: 60 * 60, 
+      })
+
       return response.ok({
         message: 'Login successful',
         type: token.type,
-        token: token.value!.release(),
+        token: token.value!.release(), // Include token for Postman testing
         token_expires_at: token.expiresAt,
         user: {
           id: user.id,
@@ -53,10 +65,14 @@ export default class SessionController {
       })
     }
   }
+
   //logout
   async destroy({ auth, response }: HttpContext) {
     try {
       await auth.use('api').invalidateToken()
+
+      response.clearCookie('token')
+
       return response.ok({
         message: 'Logout successful',
       })
