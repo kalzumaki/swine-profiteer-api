@@ -8,12 +8,14 @@ import User from '#models/user'
 import SessionController from '#controllers/session_controller'
 import UsersController from '#controllers/users_controller'
 import TrashedUsersController from '#controllers/trashed_users_controller'
+import MailController from '#controllers/mail_controller'
 
 router
   // default route
   .get('/', async () => {
     return {
-      hello: 'world',
+     message: 'Swine Profiteer API',
+    version: '1.0.0'
     }
   })
   .use(throttle)
@@ -23,6 +25,12 @@ router.post('/login', [SessionController, 'store']).use(throttle)
 
 // register
 router.post('/register', [UsersController, 'store']).use(throttle)
+
+// email verification
+router.post('/send-verification', [MailController, 'sendVerification']).use(throttle)
+router.get('/verify-email', [MailController, 'showVerificationForm']) // Show form
+router.post('/verify-email', [MailController, 'verifyEmail']).use(throttle) // Process verification
+router.post('/resend-verification', [MailController, 'resendVerification']).use(throttle)
 
 // auth guard
 router

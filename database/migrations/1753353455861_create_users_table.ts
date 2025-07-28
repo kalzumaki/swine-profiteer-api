@@ -6,10 +6,19 @@ export default class extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').notNullable()
-      table.integer('user_type').unsigned().references('user_types.id').onDelete('RESTRICT').notNullable()
+      table
+        .integer('user_type')
+        .unsigned()
+        .references('user_types.id')
+        .onDelete('RESTRICT')
+        .notNullable()
       table.string('fname').notNullable()
       table.string('lname').notNullable()
       table.string('email', 254).notNullable().unique()
+      table.boolean('is_email_verified').defaultTo(false).notNullable()
+      table.string('verification_token').nullable()
+      table.timestamp('verification_expires_at').nullable()
+      table.timestamp('email_verified_at').nullable()
       table.string('username', 50).notNullable().unique()
       table.string('password').notNullable()
       table.string('profile').nullable()

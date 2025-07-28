@@ -37,6 +37,9 @@ export default class User extends compose(BaseModel, AuthFinder, SoftDeletes) {
   @column()
   declare email: string
 
+  @column()
+  declare isEmailVerified: boolean
+
   @column({ serializeAs: null })
   declare password: string
 
@@ -45,6 +48,15 @@ export default class User extends compose(BaseModel, AuthFinder, SoftDeletes) {
 
   @column.dateTime()
   declare deletedAt: DateTime | null
+
+  @column()
+  declare verificationToken: string | null
+
+  @column.dateTime()
+  declare verificationExpiresAt: DateTime | null
+
+  @column.dateTime()
+  declare emailVerifiedAt: DateTime | null
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
