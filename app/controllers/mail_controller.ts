@@ -41,8 +41,7 @@ export default class MailController {
         })
         .save()
 
-      // Use port 3333 for verification URL
-      const verificationUrl = `http://localhost:3333/verify-email?token=${verificationToken}&email=${user.email}`
+    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${user.email}`
 
       await mail.send((message) => {
         message
@@ -185,8 +184,7 @@ export default class MailController {
                       <h2>Email Verified Successfully!</h2>
                       <p>Hello <strong>${user.fname} ${user.lname}</strong>,</p>
                       <p>Your email <strong>${user.email}</strong> has been verified successfully.</p>
-                      <p>You can now access all features of Swine Profiteer.</p>
-                      <a href="http://localhost:3333/" class="button">Go to Homepage</a>
+                      <p>You can now close this tab.</p>
                   </div>
               </div>
           </body>

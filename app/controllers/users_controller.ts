@@ -2,7 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
 import UserType from '#models/user_type'
 import { createUserValidator, updateUserValidator } from '../validators/user_validator.js'
-
+import MailController from '#controllers/mail_controller'
 export default class UsersController {
   // block user
   async destroy({ params, response }: HttpContext) {
@@ -41,10 +41,25 @@ export default class UsersController {
 
       const user = await User.create(userData)
 
+      // Send verification email using existing endpoint
+      try {
+        const mailController = new MailController()
+        const mockRequest = { only: () => ({ email: user.email }) }
+        const mockResponse = { ok: () => {}, internalServerError: () => {} }
+
+        await mailController.sendVerification({
+          request: mockRequest,
+          response: mockResponse,
+        } as any)
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError)
+        // Continue with registration even if email fails
+      }
+
       const userType = await UserType.find(user.user_type)
 
       return response.created({
-        message: `User ${user.username} created successfully.`,
+        message: `User ${user.username} created successfully. Please check your email to verify your account.`,
         user: {
           id: user.id,
           user_type: user.user_type,
@@ -55,6 +70,7 @@ export default class UsersController {
           email: user.email,
           profile: user.profile,
         },
+        verification_sent: true,
       })
     } catch (error) {
       if (error.messages) {

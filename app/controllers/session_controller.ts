@@ -27,7 +27,14 @@ export default class SessionController {
       }
 
       const user = await User.verifyCredentials(username, password)
-
+      if (!user.isEmailVerified) {
+        return response.forbidden({
+          message:
+            'Please verify your email address before logging in. Check your inbox for a verification email.',
+          email: user.email,
+          requires_verification: true,
+        })
+      }
       // find the user's user type
       const userType = await UserType.find(user.user_type)
 
@@ -39,8 +46,8 @@ export default class SessionController {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
-        // maxAge: 60 * 60, 
-        maxAge: 60 * 60, 
+        // maxAge: 60 * 60,
+        maxAge: 60 * 60,
       })
 
       return response.ok({
