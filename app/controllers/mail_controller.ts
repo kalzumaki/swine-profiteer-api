@@ -240,11 +240,6 @@ export default class MailController {
                 border-radius: 16px; 
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
                 overflow: hidden;
-                animation: slideUp 0.3s ease-out;
-            }
-            @keyframes slideUp {
-                from { opacity: 0; transform: translateY(20px); }
-                to { opacity: 1; transform: translateY(0); }
             }
             .header { 
                 background: linear-gradient(135deg, #059669 0%, #047857 100%); 
@@ -418,12 +413,6 @@ export default class MailController {
                 box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); 
                 max-width: 400px; 
                 width: 100%;
-                animation: celebration 0.6s ease-out;
-            }
-            @keyframes celebration {
-                0% { opacity: 0; transform: scale(0.8) rotate(-5deg); }
-                50% { transform: scale(1.05) rotate(2deg); }
-                100% { opacity: 1; transform: scale(1) rotate(0deg); }
             }
             .success-icon {
                 width: 80px; 
@@ -483,13 +472,16 @@ export default class MailController {
                 <h1>Swine Profiteer</h1>
                 <p>Email Verification</p>
             </div>
-            <div class="content">
+            <div class="content" id="mainContent">
                 <div id="messageArea"></div>
                 
                 ${
                   token && email
                     ? `
                 <script>
+                    // Hide the form immediately if auto-verifying
+                    document.getElementById('mainContent').style.display = 'none';
+                    
                     fetch('/verify-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -509,10 +501,12 @@ export default class MailController {
                                 </div>
                             \`;
                         } else {
+                            document.getElementById('mainContent').style.display = 'block';
                             document.getElementById('messageArea').innerHTML = '<div class="message error">' + data.message + '</div>';
                         }
                     })
                     .catch(() => {
+                        document.getElementById('mainContent').style.display = 'block';
                         document.getElementById('messageArea').innerHTML = '<div class="message error">Verification failed. Please try manually below.</div>';
                     });
                 </script>
