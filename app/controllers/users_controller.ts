@@ -41,7 +41,6 @@ export default class UsersController {
 
       const user = await User.create(userData)
 
-      // Send verification email using existing endpoint
       try {
         const mailController = new MailController()
         const mockRequest = { only: () => ({ email: user.email }) }
@@ -53,7 +52,6 @@ export default class UsersController {
         } as any)
       } catch (emailError) {
         console.error('Failed to send verification email:', emailError)
-        // Continue with registration even if email fails
       }
 
       const userType = await UserType.find(user.user_type)
@@ -227,33 +225,26 @@ export default class UsersController {
     }
   }
 
-  // get current authenticated user profile
-  async profile({ auth, response }: HttpContext) {
+  // get current authenticated user
+  async me({ auth, response }: HttpContext) {
     try {
-      if (!auth.user) {
-        return response.unauthorized('You must be logged in to view your profile.')
-      }
+      const user = await auth.use('api').authenticate()
 
-      const user = auth.user!
+      // Get user type
       const userType = await UserType.find(user.user_type)
 
       return response.ok({
-        message: 'Profile retrieved successfully.',
-        user: {
-          id: user.id,
-          user_type: user.user_type,
-          user_type_name: userType ? userType.name : null,
-          fname: user.fname,
-          lname: user.lname,
-          username: user.username,
-          email: user.email,
-          profile: user.profile,
-        },
+        id: user.id,
+        user_type: userType ? userType.name : null,
+        fname: user.fname,
+        lname: user.lname,
+        username: user.username,
+        email: user.email,
+        profile: user.profile,
       })
     } catch (error) {
-      return response.internalServerError({
-        message: 'An error occurred while retrieving your profile.',
-        error: error.message,
+      return response.unauthorized({
+        message: 'Unauthorized access',
       })
     }
   }

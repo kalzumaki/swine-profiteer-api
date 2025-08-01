@@ -41,7 +41,7 @@ export default class MailController {
         })
         .save()
 
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${user.email}`
+    const verificationUrl = `${process.env.TUNNEL_URL}/verify-email?token=${verificationToken}&email=${user.email}`
 
       await mail.send((message) => {
         message
@@ -666,7 +666,7 @@ export default class MailController {
         })
         .save()
 
-      const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${user.email}`
+      const verificationUrl = `${process.env.TUNNEL_URL}/verify-email?token=${verificationToken}&email=${user.email}`
 
       await mail.send((message) => {
         message.to(user.email).subject('Verify Your Email - Resent').html(`

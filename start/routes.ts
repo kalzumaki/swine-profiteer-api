@@ -9,13 +9,22 @@ import SessionController from '#controllers/session_controller'
 import UsersController from '#controllers/users_controller'
 import TrashedUsersController from '#controllers/trashed_users_controller'
 import MailController from '#controllers/mail_controller'
+import { HttpContext } from '@adonisjs/core/http'
+const extractTokenFromCookie = async ({ request }: HttpContext, next: () => Promise<void>) => {
+  const token = request.cookie('token')
 
+  if (token && !request.header('authorization')) {
+    request.request.headers['authorization'] = `Bearer ${token}`
+  }
+
+  await next()
+}
 router
   // default route
   .get('/', async () => {
     return {
-     message: 'Swine Profiteer API',
-    version: '1.0.0'
+      message: 'Swine Profiteer API',
+      version: '1.0.0',
     }
   })
   .use(throttle)
@@ -38,10 +47,13 @@ router
     // logout
     router.delete('/logout', [SessionController, 'destroy'])
 
+    // get current user
+    router.get('/me', [UsersController, 'me'])
+
     // user management
     router.put('/user/:id', [UsersController, 'update']) // update user
     router.delete('/block/:id', [UsersController, 'destroy']) // block user
-    router.get('/profile', [UsersController, 'profile']) // get current user profile
+
     router.put('/profile', [UsersController, 'updateProfile']) // update current user profile
     // trashed users management
     router.put('/restore/:id', [TrashedUsersController, 'update']) // restore user
@@ -52,4 +64,4 @@ router
       return User.accessTokens.all(auth.user!)
     })
   })
-  .use([middleware.auth({ guards: ['api'] }), middleware.tokenExpiration()])
+  .use([extractTokenFromCookie, middleware.auth({ guards: ['api'] }), middleware.tokenExpiration()])

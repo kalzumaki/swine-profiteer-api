@@ -2,7 +2,13 @@ import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
 import UserType from '#models/user_type'
 import { UserWithSoftDeletes } from '../types/user.js'
-
+interface CustomCookieOptions {
+  httpOnly: boolean
+  secure: boolean
+  sameSite: 'lax' | 'strict' | 'none' | boolean
+  maxAge: number
+  path: string
+}
 export default class SessionController {
   //login
   async store({ request, auth, response }: HttpContext) {
@@ -42,19 +48,22 @@ export default class SessionController {
         name: `${user.username}-login-token`,
       })
       const isProduction: boolean = process.env.NODE_ENV === 'production'
-      response.cookie('token', token.value!.release(), {
+      
+      const cookieOptions: CustomCookieOptions = {
         httpOnly: true,
-        secure: isProduction,
+        secure: isProduction, 
         sameSite: 'lax',
-        // maxAge: 60 * 60,
-        maxAge: 60 * 60,
-      })
+        maxAge: 60 * 60, 
+        path: '/',
+      }
+      
+      response.cookie('token', token.value!.release(), cookieOptions)
 
       return response.ok({
         message: 'Login successful',
-        type: token.type,
-        token: token.value!.release(), // Include token for Postman testing
-        token_expires_at: token.expiresAt,
+        // type: token.type,
+        // token: token.value!.release(),
+        // token_expires_at: token.expiresAt,
         user: {
           id: user.id,
           user_type: userType ? userType.name : null,
@@ -78,7 +87,17 @@ export default class SessionController {
     try {
       await auth.use('api').invalidateToken()
 
-      response.clearCookie('token')
+      const isProduction: boolean = process.env.NODE_ENV === 'production'
+      
+      const cookieOptions: CustomCookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 0,
+        path: '/',
+      }
+
+      response.clearCookie('token', cookieOptions)
 
       return response.ok({
         message: 'Logout successful',
