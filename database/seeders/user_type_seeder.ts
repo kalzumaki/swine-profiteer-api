@@ -1,6 +1,7 @@
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import UserType from '#models/user_type'
 import User from '#models/user'
+import { DateTime } from 'luxon'
 export default class extends BaseSeeder {
   async run() {
     await UserType.createMany([{ name: 'admin' }, { name: 'hog raiser' }])
@@ -10,6 +11,8 @@ export default class extends BaseSeeder {
         fname: 'Admin',
         lname: 'User',
         email: 'admin.test@gmail.com',
+        isEmailVerified: true,
+        emailVerifiedAt: DateTime.now(),
         username: 'admin',
         password: 'Admin@123',
       },
@@ -18,6 +21,8 @@ export default class extends BaseSeeder {
         fname: 'Hog',
         lname: 'Raiser',
         email: 'hog.raiser@gmail.com',
+        isEmailVerified: true,
+        emailVerifiedAt: DateTime.now(),
         username: 'hograiser',
         password: 'Hog@123',
       },
