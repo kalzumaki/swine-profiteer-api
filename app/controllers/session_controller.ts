@@ -23,7 +23,9 @@ export default class SessionController {
         .first()) as UserWithSoftDeletes | null
 
       if (!userCheck) {
-        return response.unauthorized('Invalid credentials')
+        return response.unauthorized({
+          message: 'Account not found. Please check your username or register for a new account.',
+        })
       }
 
       if (userCheck.deletedAt) {
@@ -75,6 +77,13 @@ export default class SessionController {
         },
       })
     } catch (error) {
+      
+      if (error.message === 'Invalid user credentials') {
+        return response.unauthorized({
+          message: 'Incorrect password. Please try again.',
+        })
+      }
+      
       return response.internalServerError({
         message: 'An error occurred during login. Please try again.',
         error: error.message,
