@@ -49,5 +49,9 @@ export const updateUserValidator = vine.compile(
       return true
     }).optional(),
     password: vine.string().minLength(6).maxLength(100).optional(),
+    profile: vine.file({
+      size: '5mb',
+      extnames: ['jpg', 'jpeg', 'png']
+    }).optional(),
   })
 )

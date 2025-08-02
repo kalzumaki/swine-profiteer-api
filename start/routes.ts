@@ -1,6 +1,8 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 import { throttle } from '#start/limiter'
+import app from '@adonisjs/core/services/app'
+import fs from 'fs/promises'
 
 // models
 import User from '#models/user'
@@ -37,6 +39,19 @@ router
     router.post('/verify-email', [MailController, 'verifyEmail']).use(throttle) // Process verification
 
     router.post('/resend-verification', [MailController, 'resendVerification']).use(throttle) // resend verification
+
+    // serve profile images
+    router.get('/profile-image/:filename', async ({ params, response }) => {
+      const filename = params.filename
+      const filePath = app.makePath('storage/uploads/profiles', filename)
+
+      try {
+        await fs.access(filePath)
+        return response.download(filePath)
+      } catch {
+        return response.notFound('Image not found')
+      }
+    })
   })
   .prefix('/api')
 

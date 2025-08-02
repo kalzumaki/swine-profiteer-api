@@ -3,6 +3,10 @@ import User from '#models/user'
 import UserType from '#models/user_type'
 import { createUserValidator, updateUserValidator } from '../validators/user_validator.js'
 import MailController from '#controllers/mail_controller'
+import app from '@adonisjs/core/services/app'
+import { cuid } from '@adonisjs/core/helpers'
+import fs from 'fs/promises'
+import path from 'path'
 export default class UsersController {
   // block user
   async destroy({ params, response }: HttpContext) {
@@ -163,6 +167,7 @@ export default class UsersController {
       })
     }
   }
+
   // update current authenticated user profile
   async updateProfile({ request, auth, response }: HttpContext) {
     try {
@@ -175,25 +180,66 @@ export default class UsersController {
         meta: { userId: user.id },
       })
 
+      let profileFileName = user.profile
+
+      if (payload.profile) {
+        try {
+          const uploadDir = app.makePath('storage/uploads/profiles')
+
+          try {
+            await fs.access(uploadDir)
+          } catch {
+            await fs.mkdir(uploadDir, { recursive: true })
+          }
+
+          if (user.profile) {
+            const oldImagePath = app.makePath('storage/uploads/profiles', user.profile)
+            try {
+              await fs.unlink(oldImagePath)
+            } catch {
+              // Ignore 
+            }
+          }
+          const fileExtension = path.extname(payload.profile.clientName || '')
+          const fileName = `${cuid()}${fileExtension}`
+
+          await payload.profile.move(uploadDir, { name: fileName })
+
+          profileFileName = fileName
+        } catch (uploadError) {
+          return response.badRequest({
+            message: 'Failed to upload profile image',
+            error: uploadError.message,
+          })
+        }
+      }
+
+      const { profile, ...restPayload } = payload
+
       const cleanPayload = Object.fromEntries(
-        Object.entries(payload).filter(([_, value]) => value !== undefined)
+        Object.entries(restPayload).filter(([_, value]) => value !== undefined)
       )
+
+      if (profileFileName !== undefined && profileFileName !== null) {
+        cleanPayload.profile = profileFileName
+      }
 
       await user.merge(cleanPayload).save()
 
-      const userType = await UserType.find(user.user_type)
+      const profileImageUrl = user.profile
+        ? `${process.env.TUNNEL_URL}/api/profile-image/${user.profile}`
+        : null
 
       return response.ok({
         message: `Profile updated successfully.`,
         user: {
           id: user.id,
-          user_type: user.user_type,
-          user_type_name: userType ? userType.name : null,
           fname: user.fname,
           lname: user.lname,
           username: user.username,
           email: user.email,
           profile: user.profile,
+          profile_image_url: profileImageUrl,
         },
       })
     } catch (error) {
@@ -233,6 +279,10 @@ export default class UsersController {
       // Get user type
       const userType = await UserType.find(user.user_type)
 
+      const profileImageUrl = user.profile
+        ? `${process.env.TUNNEL_URL}/api/profile-image/${user.profile}`
+        : null
+
       return response.ok({
         id: user.id,
         user_type: userType ? userType.name : null,
@@ -241,6 +291,7 @@ export default class UsersController {
         username: user.username,
         email: user.email,
         profile: user.profile,
+        profile_image_url: profileImageUrl,
       })
     } catch (error) {
       return response.unauthorized({
