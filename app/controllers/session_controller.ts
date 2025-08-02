@@ -50,40 +50,31 @@ export default class SessionController {
         name: `${user.username}-login-token`,
       })
       const isProduction: boolean = process.env.NODE_ENV === 'production'
-      
+
       const cookieOptions: CustomCookieOptions = {
         httpOnly: true,
-        secure: isProduction, 
+        secure: isProduction,
         sameSite: 'lax',
-        maxAge: 60 * 60, 
+        maxAge: 60 * 60,
         path: '/',
       }
-      
+
       response.cookie('token', token.value!.release(), cookieOptions)
 
       return response.ok({
         message: 'Login successful',
-        // type: token.type,
-        // token: token.value!.release(),
-        // token_expires_at: token.expiresAt,
         user: {
           id: user.id,
           user_type: userType ? userType.name : null,
-          fname: user.fname,
-          lname: user.lname,
-          username: user.username,
-          email: user.email,
-          profile: user.profile,
         },
       })
     } catch (error) {
-      
       if (error.message === 'Invalid user credentials') {
         return response.unauthorized({
           message: 'Incorrect password. Please try again.',
         })
       }
-      
+
       return response.internalServerError({
         message: 'An error occurred during login. Please try again.',
         error: error.message,
@@ -97,7 +88,7 @@ export default class SessionController {
       await auth.use('api').invalidateToken()
 
       const isProduction: boolean = process.env.NODE_ENV === 'production'
-      
+
       const cookieOptions: CustomCookieOptions = {
         httpOnly: true,
         secure: isProduction,

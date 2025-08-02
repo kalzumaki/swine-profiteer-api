@@ -41,7 +41,7 @@ export default class MailController {
         })
         .save()
 
-    const verificationUrl = `${process.env.TUNNEL_URL}/verify-email?token=${verificationToken}&email=${user.email}`
+      const verificationUrl = `${process.env.TUNNEL_URL}/api/verify-email?token=${verificationToken}&email=${user.email}`
 
       await mail.send((message) => {
         message
@@ -482,7 +482,7 @@ export default class MailController {
                     // Hide the form immediately if auto-verifying
                     document.getElementById('mainContent').style.display = 'none';
                     
-                    fetch('/verify-email', {
+                    fetch('/api/verify-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ token: '${token}', email: '${email}' })
@@ -565,7 +565,7 @@ export default class MailController {
                 startCooldown();
                 document.getElementById('resendMessage').innerHTML = '';
                 
-                fetch('/resend-verification', {
+                fetch('/api/resend-verification', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })
@@ -592,7 +592,7 @@ export default class MailController {
                 btn.disabled = true;
                 
                 const formData = new FormData(e.target);
-                fetch('/verify-email', {
+                fetch('/api/verify-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -666,7 +666,7 @@ export default class MailController {
         })
         .save()
 
-      const verificationUrl = `${process.env.TUNNEL_URL}/verify-email?token=${verificationToken}&email=${user.email}`
+      const verificationUrl = `${process.env.TUNNEL_URL}/api/verify-email?token=${verificationToken}&email=${user.email}`
 
       await mail.send((message) => {
         message.to(user.email).subject('Verify Your Email - Resent').html(`

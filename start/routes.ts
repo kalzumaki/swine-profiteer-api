@@ -9,16 +9,7 @@ import SessionController from '#controllers/session_controller'
 import UsersController from '#controllers/users_controller'
 import TrashedUsersController from '#controllers/trashed_users_controller'
 import MailController from '#controllers/mail_controller'
-import { HttpContext } from '@adonisjs/core/http'
-const extractTokenFromCookie = async ({ request }: HttpContext, next: () => Promise<void>) => {
-  const token = request.cookie('token')
 
-  if (token && !request.header('authorization')) {
-    request.request.headers['authorization'] = `Bearer ${token}`
-  }
-
-  await next()
-}
 router
   // default route
   .get('/', async () => {
@@ -29,19 +20,27 @@ router
   })
   .use(throttle)
 
-// login
-router.post('/login', [SessionController, 'store']).use(throttle)
+// API routes (public)
+router
+  .group(() => {
+    // login
+    router.post('/login', [SessionController, 'store']).use(throttle)
 
-// register
-router.post('/register', [UsersController, 'store']).use(throttle)
+    // register
+    router.post('/register', [UsersController, 'store']).use(throttle)
 
-// email verification
-router.post('/send-verification', [MailController, 'sendVerification']).use(throttle)
-router.get('/verify-email', [MailController, 'showVerificationForm']) // Show form
-router.post('/verify-email', [MailController, 'verifyEmail']).use(throttle) // Process verification
-router.post('/resend-verification', [MailController, 'resendVerification']).use(throttle)
+    // email verification
+    router.post('/send-verification', [MailController, 'sendVerification']).use(throttle)
 
-// auth guard
+    router.get('/verify-email', [MailController, 'showVerificationForm']) // Show form
+
+    router.post('/verify-email', [MailController, 'verifyEmail']).use(throttle) // Process verification
+
+    router.post('/resend-verification', [MailController, 'resendVerification']).use(throttle) // resend verification
+  })
+  .prefix('/api')
+
+// Authenticated API routes
 router
   .group(() => {
     // logout
@@ -64,4 +63,9 @@ router
       return User.accessTokens.all(auth.user!)
     })
   })
-  .use([extractTokenFromCookie, middleware.auth({ guards: ['api'] }), middleware.tokenExpiration()])
+  .prefix('/api')
+  .use([
+    middleware.extractToken(),
+    middleware.auth({ guards: ['api'] }),
+    middleware.tokenExpiration(),
+  ])
