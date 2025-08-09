@@ -7,7 +7,7 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('pig_no')
       table.integer('user_id').unsigned().references('users.id').onDelete('CASCADE')
-      table.enum('pig_type', ['breeding', 'fattening', 'weaning']).notNullable()
+      table.enum('pig_type', ['sow', 'fattening', 'boar']).notNullable()
       table.string('name', 20).notNullable()
       table.string('batch_code', 20).notNullable()
       table.string('color', 20).notNullable()
