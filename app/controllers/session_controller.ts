@@ -66,6 +66,7 @@ export default class SessionController {
         user: {
           id: user.id,
           user_type: userType ? userType.name : null,
+          fname : user.fname
         },
       })
     } catch (error) {
