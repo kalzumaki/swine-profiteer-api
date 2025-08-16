@@ -197,7 +197,7 @@ export default class UsersController {
             try {
               await fs.unlink(oldImagePath)
             } catch {
-              // Ignore 
+              // Ignore
             }
           }
           const fileExtension = path.extname(payload.profile.clientName || '')
@@ -244,6 +244,21 @@ export default class UsersController {
       })
     } catch (error) {
       if (error.messages) {
+        const fileErrors = error.messages.profile
+        if (fileErrors) {
+          if (fileErrors.some((msg: string) => msg.includes('size'))) {
+            return response.badRequest({
+              message: 'Profile image size exceeds the 10MB limit.',
+              errors: error.messages,
+            })
+          }
+          if (fileErrors.some((msg: string) => msg.includes('extnames'))) {
+            return response.badRequest({
+              message: 'Invalid profile image format. Only JPG, JPEG, and PNG are allowed.',
+              errors: error.messages,
+            })
+          }
+        }
         return response.badRequest({
           message: 'Validation failed',
           errors: error.messages,
