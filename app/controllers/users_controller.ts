@@ -7,6 +7,8 @@ import app from '@adonisjs/core/services/app'
 import { cuid } from '@adonisjs/core/helpers'
 import fs from 'fs/promises'
 import path from 'path'
+import { ChangePasswordDataForm, ChangePasswordResponse } from '../types/user.js'
+
 export default class UsersController {
   // block user
   async destroy({ params, response }: HttpContext) {
@@ -311,6 +313,51 @@ export default class UsersController {
     } catch (error) {
       return response.unauthorized({
         message: 'Unauthorized access',
+      })
+    }
+  }
+
+  // change password (authenticated)
+  async changePassword({auth, response, request}: HttpContext)
+  {
+    try {
+      const user = await auth.use('api').authenticate()
+
+      const data: ChangePasswordDataForm = request.only(['current_pass', 'new_pass', 'confirm'])
+
+      // validate
+      if (data.new_pass !== data.confirm){
+        return response.badRequest({
+          message: "New Password and Confirm Password doesn't match"
+        })
+      }
+      // check if all inputs are filled.
+      if (!data.current_pass || !data.new_pass || !data.confirm){
+        return response.badRequest({
+          message: 'All password fields are required.'
+        })
+      }
+      // verify current pass
+      const isMatch = await user.verifyPassword(data.current_pass)
+      if (!isMatch){
+        return response.badRequest({
+          message: "Current Password is incorrect"
+        })
+      }
+       // update password
+      user.password = data.new_pass
+      await user.save()
+
+      const res: ChangePasswordResponse = {
+        message: 'Password changed successfully.',
+        status: true,
+      }
+
+      return response.ok(res)
+    } catch (error) {
+      return response.internalServerError({
+        message: 'An error occurred while changing the password.',
+        error: error.message,
       })
     }
   }

@@ -34,3 +34,15 @@ export interface UserRegisterResponse {
     message: string
     user: UserResponse
 }
+
+// data form for changing pass
+export interface ChangePasswordDataForm {
+    current_pass: string
+    new_pass: string
+    confirm: string
+}
+
+export interface ChangePasswordResponse {
+    message: string
+    status: true
+}

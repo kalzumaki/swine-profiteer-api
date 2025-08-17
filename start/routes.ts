@@ -73,6 +73,7 @@ router
     router.put('/restore/:id', [TrashedUsersController, 'update']) // restore user
     router.get('/trashed/users', [TrashedUsersController, 'index']) // all blocked users
 
+    router.put('/change-password', [UsersController, 'changePassword']) // change pass
     // tokens
     router.get('/tokens', async ({ auth }) => {
       return User.accessTokens.all(auth.user!)
